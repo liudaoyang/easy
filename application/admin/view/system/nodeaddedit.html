@@ -1,0 +1,172 @@
+{include file="header" title="节点管理添加与编辑" /}
+<body class="gray-bg">
+<div class="wrapper wrapper-content animated fadeInRight">
+    <div class="row">
+        <div class="col-sm-8">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>{if input('id')}编辑节点{else /}添加{/if}</h5>
+                    <div class="ibox-tools">
+                        <a class="collapse-link" href="javascript:window.history.go(-1);">
+                            <i class="fa fa-reply"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="ibox-content">
+                    <form class="form-horizontal m-t" id="commentForm" method="post" onsubmit="return false;">
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">节点名称：</label>
+                            <div class="input-group col-sm-4">
+                                <input type="text" class="form-control" name="node_name" value="{$data?$data.node_name:''}" id="node_name" placeholder="请填写节点名称">
+                            </div>
+                        </div>
+                        <!--<div class="form-group">-->
+                            <!--<label class="col-sm-3 control-label">模块名称：</label>-->
+                            <!--<div class="input-group col-sm-4">-->
+                                <!--<input type="text"  name="module_name" class="form-control" value="{$data?$data.module_name:'#'}" id="module_name" placeholder="请填写模块名称">-->
+                            <!--</div>-->
+                        <!--</div>-->
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">控制器名称：</label>
+                            <div class="input-group col-sm-4">
+                                <select name="control_name" class="form-control" id="control_name">
+                                    <option value="#">#</option>
+                                    {volist name="controls" id="vo"}
+                                    <option value="{$vo}" {if condition="isset($data) && (strtolower($vo) eq strtolower($data['control_name']))"}selected{/if}>{$vo}</option>
+                                    {/volist}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">方法名称：</label>
+                            <div class="input-group col-sm-4">
+                                <select name="action_name" class="form-control" id="action_name">
+                                    <option value="#">#</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">父级：</label>
+                            <div class="input-group col-sm-4">
+                                <select name="pid" class="form-control" id="pid">
+                                    <option value="0">顶级</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">是否为菜单：</label>
+                            <div class="input-group col-sm-4">
+                                是&nbsp;<input type="radio" class="" value="1" name="is_menu" {if condition="isset($data) && $data['is_menu'] == 1"} checked {/if} >
+                                &nbsp;&nbsp;&nbsp;&nbsp;
+                                否&nbsp;<input type="radio" class="" value="0" name="is_menu" {if condition="isset($data) && $data['is_menu'] == 0"} checked {/if} >
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">排序：</label>
+                            <div class="input-group col-sm-4">
+                                <input type="text" class="form-control" name="order" value="{$data?$data.order:''}" id="order" placeholder="请填写排序">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">图标样式：</label>
+                            <div class="input-group col-sm-4">
+                                <input type="text"  name="style" class="form-control" value="{$data?$data.style:''}" id="style" placeholder="请填写模块名称">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-4 col-sm-offset-3">
+                                <input type="hidden" name="id" value="{$data?$data.id:''}">
+                                <input type="hidden" name="type" value="{$Think.get.type}">
+                                <button class="btn btn-primary" type="submit">提交</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+var g = {
+		type: "{php}echo input('id')?'edit':'add'{/php}",
+		id: "{php}echo input('id')?:''{/php}",
+        control:"{$data?$data.control_name:''}",
+        action:"{$data?$data.action_name:''}",
+        pid:"{$data?$data.pid:''}"
+	}
+	$(document).ready(function(){
+		formValid();
+        getParents();
+        if (g.type == 'edit') {
+            getActions();
+        }
+	})
+
+	 $("#commentForm").validate({
+	    rules: {
+            node_name: "required",
+            control_name: "required",
+            action_name: "required",
+            is_menu:"required",
+	    },
+	    messages: {
+            node_name:'请填写节点名称',
+            control_name:'请填写控制器名称',
+            action_name:'请填写方法名称',
+            is_menu:'选择菜单',
+	    },
+	    submitHandler:function(form) {
+            ajaxForm('{:url("admin/system/nodeAddEdit")}', '#commentForm');
+		}
+	});
+
+    $('#control_name').change(function () {
+        getActions();
+    })
+
+    function getActions() {
+        var control = $('#control_name').val();
+        var html = '<option value="#">#</option>';
+        if (control == '#') {
+            $('#action_name').html(html);
+            return;
+        }
+        $.ajax({
+            type:'get',
+            async:true,
+            url:'{:url("admin/system/getActions")}',
+            data:{'control_name':control},
+            success:function (res) {
+                if (res.code) {
+                    $.each(res.data, function (k, v) {
+                        html += '<option value="'+v+'" '+(g.action.toLowerCase() == v.toLowerCase()?'selected':'')+'>' + v + '</option>'
+                    })
+                    $('#action_name').html(html);
+                }
+            }
+        })
+    }
+
+    function getParents() {
+        $.ajax({
+            type:'get',
+            url:'{:url("admin/system/getParentNode")}',
+            async:true,
+            success:function (res) {
+                if (res.code) {
+                    var html = '<option value="0">顶级</option>'
+                    $.each(res.data, function (k, v) {
+                        html += '<option value="'+v.id+'"'+(g.pid == v.id?'selected':'')+'>'+ v.id + '_' + v.node_name + '</option>'
+                    });
+                    $('#pid').html(html);
+                }
+            }
+        })
+    }
+
+
+
+</script>
+</body>
+</html>

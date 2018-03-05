@@ -1,0 +1,141 @@
+{include file="mobile_header" title="添加管理员" /}
+    <body ontouchstart="">
+        <header class="ui-header ui-header-positive ui-border-b">
+             <i class="ui-icon-return" onclick="history.back()"></i><h1>添加管理员</h1>
+        </header>
+        <section class="ui-container">
+            <section id="tab">
+            	<div class="ui-form ui-border-t">
+                <form action="javascript:void(0);" id="commentForm">
+                    <div class="ui-form-item ui-border-b">
+			            <label for="#">用户名</label>
+			            <input id="name" type="text" class="form-control" name="name" placeholder="*必填">
+			        </div>
+			        <div class="ui-form-item ui-border-b">
+			            <label for="#">所属角色</label>
+			            <div class="ui-select">
+				            <select class="form-control" name="role_id" id="role_id">
+
+	                        </select>
+                        </div>
+			        </div>
+			        <div class="ui-form-item  ui-border-b">
+			        	<label for="#">登录密码</label>
+			            <input id="password" type="password" class="form-control" name="password" placeholder="*含数字,字母大小写或者特殊字符">
+			        </div>
+			       <div class="ui-form-item ui-border-b">
+			            <label for="#">确认密码</label>
+			            <input id="password2" type="password" class="form-control" name="password2" placeholder="*必填">
+			        </div>
+			        <div class="ui-form-item ui-form-item-radio ui-border-b">
+			            <label class="ui-radio" for="radio">
+			                <input id="live-status" type="radio" name="status" value="live" checked="checked">
+			            </label>
+			            <p style="padding-right:1rem ;">启用</p>
+			            <label class="ui-radio" for="radio">
+			                <input id="disabled-status" type="radio" name="status" value="disabled">
+			            </label>
+			            <p>禁用</p>
+			        </div>
+                    <div class="ui-btn-wrap">
+				    	<button id="submit_form" class="ui-btn-lg">确定</button>
+					</div>
+					<input type="hidden" name="id" value="{php}echo input('id'){/php}">
+					<input type="hidden" name="type" value="{php}echo input('type'){/php}">
+					<input type="hidden" name="__token__" value="{$Request.token}" />
+                </form>
+            </div>
+        	</section>
+        	<div class="ui-loading-block">
+			    <div class="ui-loading-cnt">
+			        <i class="ui-loading-bright"></i>
+			        <p>正在提交中...</p>
+			    </div>
+			</div>
+        </section>
+        {include file="mobile_footer" /}
+        <script>
+            var g = {
+                type    : "{php}echo input('type'){/php}",
+                id      : "{php}echo input('id')?:''{/php}",
+                fieldInfo : {},
+            }
+            $(document).ready(function(){
+                //获取编辑信息
+                if (g.type == 'edit') {
+                    getFieldInfo();
+                }
+                getRoleInfo();
+                //提交
+				$('#submit_form').on('click', function () {
+                    validateSubmit();
+                })
+            })
+
+            function getFieldInfo(param) {
+                param = param || {};
+                var params = $.extend(param, {
+                    'id' : g.id
+                });
+                var fields = $('#commentForm').serializeArray();
+                $.ajax({
+                    'type':'post',
+                    'url':'{:url("admin/admin/getAdminInfo")}',
+                    'data':params,
+                    'success' :function (res) {
+                        if (res.code) {
+                            g.fieldInfo = res.data;
+                            $.each(fields, function (k,v) {
+                                if (v.name == 'role_id' || v.name =='__token__' || v.name == 'password' || v.name == 'password2'|| v.name=='type') {
+                                    return true;
+                                }
+                                if (v.name == 'status') {
+                                    res.data.status == 'live' && $('#live-status').attr('checked',true);
+                                    res.data.status == 'disabled' && $('#disabled-status').attr('checked',true);
+                                    return true;
+                                }
+                                $('input[name="'+v.name+'"]').val(res.data[v.name]);
+                            })
+                        }
+                    }
+                })
+            }
+
+            function getRoleInfo(param) {
+                param = param || {};
+                var params = $.extend(param, {});
+                $.ajax({
+                    'type':'post',
+                    'url':'{:url("admin/role/getRoles")}',
+                    'data':params,
+                    'success' :function (res) {
+                        if (res.code) {
+                            var html = '<option value="">请选择</option>';
+                            $.each(res.data, function (k,v) {
+                                html += '<option value="'+v.id+'" '+(v.id == g.fieldInfo.role_id?'selected':'')+'>'+v.name+'</option>'
+                            })
+                            $('#role_id').html(html);
+                        }
+                    }
+                })
+            }
+            
+			function validateSubmit() {
+				if ($('#name').val() == '') {
+					layerMsg('用户名不能为空');return;
+				}
+				if ($('#role_id').val() == '') {
+					layerMsg('角色名不能为空');return;
+				}
+				if ($('#password').val() == '') {
+				    layerMsg('密码不能空');return;
+				}
+				if ($('#password').val() !== $('#password2').val()) {
+				    layerMsg('两次密码不一致');return;
+				}
+                ajaxForm('{:url("admin/admin/adminaddedit")}', '#commentForm');
+            }            
+            
+        </script>
+    </body>
+</html>

@@ -1,0 +1,94 @@
+{include file="header" title="添加角色" /}
+<body class="gray-bg">
+<div class="wrapper wrapper-content animated fadeInRight">
+    <div class="row">
+        <div class="col-sm-8">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>{if input('id')}编辑角色{else /}添加角色{/if}</h5>
+                    <div class="ibox-tools">
+                        <a class="collapse-link" href="javascript:window.history.go(-1);">
+                            <i class="fa fa-reply"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="ibox-content">
+                    <form class="form-horizontal m-t" id="commentForm" method="post" action="javascript:void(0);" >
+
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">角色名：</label>
+                            <div class="input-group col-sm-4">
+                                <input id="name" type="text" class="form-control" name="name" value="">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-4 col-sm-offset-3">
+                            	<input type="hidden" name="id" value="{php}echo input('id'){/php}">
+                                <input type="hidden" name="type" value="{php}echo input('type'){/php}">
+                                <input type="hidden" name="__token__" value="{$Request.token}" />
+                                <button class="btn btn-primary" type="submit">提交</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="setRole2"></div>
+<script type="text/javascript">
+	var g = {
+		type    : "{php}echo input('type'){/php}",
+		id      : "{php}echo input('id')?:''{/php}",
+	}
+	$(document).ready(function(){
+        formValid();
+        //获取编辑信息
+        if (g.type == 'edit') {
+            getFieldInfo();
+        }
+	})
+
+    $("#commentForm").validate({
+        rules: {
+            name: {
+                required:true,
+            },
+        },
+        messages: {
+            name: {
+                required: '请输入账号',
+            },
+        },
+        submitHandler:function(form) {
+            ajaxForm('{:url("admin/role/roleAddEdit")}', '#commentForm');
+        }
+    });
+
+	function getFieldInfo(param) {
+	    param = param || {};
+	    var params = $.extend(param, {
+	        'id' : g.id
+        });
+        var fields = $('#commentForm').serializeArray();
+        $.ajax({
+            'type':'post',
+            'url':'{:url("admin/role/getRoleInfo")}',
+            'data':params,
+            'success' :function (res) {
+                if (res.code) {
+                    $.each(fields, function (k,v) {
+                        if (v.name =='__token__' || v.name=='type') {
+                            return true;
+                        }
+                        $('input[name="'+v.name+'"]').val(res.data[v.name]);
+                    })
+                }
+            }
+        })
+    }
+
+
+</script>
+</body>
+</html>

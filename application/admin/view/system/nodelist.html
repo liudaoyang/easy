@@ -1,0 +1,129 @@
+{include file="header" title="节点管理" /}
+<body class="gray-bg">
+<div class="wrapper wrapper-content animated fadeInRight">
+    <!-- Panel Other -->
+    <div class="ibox float-e-margins">
+        <div class="ibox-title">
+            <h5>节点管理</h5>
+        </div>
+        <div class="ibox-content">
+            <div class="form-group clearfix col-sm-1">
+                <a href="{:url('admin/system/nodeAddEdit')}"><button class="btn btn-outline btn-primary" type="button">添加节点</button></a>
+            </div>
+            <!--搜索框开始-->
+            <form id='commentForm' role="form" method="post" class="form-inline">
+                <div class="content clearfix m-b">
+                    <div class="form-group">
+                        <label>节点：</label>
+                        <input type="text" class="form-control" name="node_name" value="" id="node_name" placeholder="节点不限">
+                    </div>
+                </div>
+            </form>
+            <!--搜索框结束-->
+            <div class="hr-line-dashed"></div>
+
+            <div class="example-wrap">
+                <div class="example">
+                    <table id="cusTable" data-height="">
+                        <thead>
+                        <th data-field="id">ID</th>
+                        <th data-field="node_name">节点名称</th>
+                        <th data-field="module_name">模块名称</th>
+                        <th data-field="control_name">控制器名称</th>
+                        <th data-field="action_name">方法名称</th>
+                        <th data-field="is_menu">是否为菜单</th>
+                        <th data-field="pid">父级id</th>
+                        <th data-field="order">排序</th>
+                        <th data-field="style">图标样式</th>
+                        <th data-field="operate">操作</th>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+            <!-- End Example Pagination -->
+        </div>
+    </div>
+</div>
+<!-- End Panel Other -->
+</div>
+
+
+<script type="text/javascript">
+    function initTable() {
+        $('#cusTable').bootstrapTable('destroy');
+        $("#cusTable").bootstrapTable({
+            method: "get",  //使用get请求到服务器获取数据
+            url: "{:url('admin/system/nodeList')}", //获取数据的地址
+            striped: true,  //表格显示条纹
+            pagination: true, //启动分页
+            pageSize: 20,  //每页显示的记录数
+            pageNumber:1, //当前第几页
+            pageList: [5, 10, 15, 20, 25],  //记录数可选列表
+            sidePagination: "server", //表示服务端请求
+            queryParamsType : "undefined",
+            queryParams: function queryParams(params) {   //设置查询参数
+                var param = {
+                    pageNumber: params.pageNumber,
+                    pageSize: params.pageSize,
+                    name:$('#name').val(),
+                };
+                return param;
+            },
+            responseHandler: function(res) {
+                if (res.code) {
+                    $.each(res.data.rows, function(k,v) {
+                        if (v.id == 1) {
+                            return true;
+                        }
+                        res.data.rows[k]['operate'] = '<div class="operate-text">'+
+                            '<a href="{:url(\'admin/system/nodeAddEdit\')}?type=edit&id='+v.id+'"><i class="fa fa-edit i-success"></i></a>'+
+//                            '<i class="fa fa-trash i-danger i-delete" onclick="adminDel('+v.id+')"></i>'+
+                            '</div>'
+                    });
+                    return {
+                        rows:res.data.rows,
+                        total:res.data.total
+                    };
+                }else{
+                    layer.msg(data.data);
+                }
+            },
+            onLoadSuccess: function(){  //加载成功时执行
+                layer.msg("加载成功", {time : 1000});
+            },
+            onLoadError: function(){  //加载失败时执行
+                layer.msg("加载数据失败");
+            }
+        });
+    }
+
+    $(document).ready(function () {
+        //调用函数，初始化表格
+        initTable();
+
+        //当点击查询按钮的时候执行
+        $("#search").bind("click", initTable);
+
+    });
+
+    function roleDel(id){
+        layer.confirm('确认删除此节点?', {icon: 3, title:'提示'}, function(index){
+            //do something
+            $.getJSON('./roleDel', {'id' : id}, function(res){
+                if(res.code == 1){
+                    layer.alert('删除成功', function(){
+                        initTable();
+                    });
+                }else{
+                    layer.alert('删除失败');
+                }
+            });
+
+            layer.close(index);
+        })
+
+    }
+
+</script>
+</body>
+</html>

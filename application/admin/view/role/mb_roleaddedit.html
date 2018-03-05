@@ -1,0 +1,80 @@
+{include file="mobile_header" title="添加管理员" /}
+    <body ontouchstart="">
+        <header class="ui-header ui-header-positive ui-border-b">
+             <i class="ui-icon-return" onclick="history.back()"></i><h1>添加管理员</h1>
+        </header>
+        <section class="ui-container">
+            <section id="tab">
+            	<div class="ui-form ui-border-t">
+                <form action="javascript:void(0);" id="commentForm">
+                    <div class="ui-form-item ui-border-b">
+			            <label for="#">用户名</label>
+			            <input id="name" type="text" class="form-control" name="name" placeholder="*必填">
+			        </div>
+                    <div class="ui-btn-wrap">
+				    	<button id="submit_form" class="ui-btn-lg">确定</button>
+					</div>
+					<input type="hidden" name="id" value="{php}echo input('id'){/php}">
+					<input type="hidden" name="type" value="{php}echo input('type'){/php}">
+					<input type="hidden" name="__token__" value="{$Request.token}" />
+                </form>
+            </div>
+        	</section>
+        	<div class="ui-loading-block">
+			    <div class="ui-loading-cnt">
+			        <i class="ui-loading-bright"></i>
+			        <p>正在提交中...</p>
+			    </div>
+			</div>
+        </section>
+        {include file="mobile_footer" /}
+        <script>
+            var g = {
+                type    : "{php}echo input('type'){/php}",
+                id      : "{php}echo input('id')?:''{/php}",
+                fieldInfo : {},
+            }
+            $(document).ready(function(){
+                //获取编辑信息
+                if (g.type == 'edit') {
+                    getFieldInfo();
+                }
+                //提交
+				$('#submit_form').on('click', function () {
+                    validateSubmit();
+                })
+            })
+
+            function getFieldInfo(param) {
+                param = param || {};
+                var params = $.extend(param, {
+                    'id' : g.id
+                });
+                var fields = $('#commentForm').serializeArray();
+                $.ajax({
+                    'type':'post',
+                    'url':'{:url("admin/role/getRoleInfo")}',
+                    'data':params,
+                    'success' :function (res) {
+                        if (res.code) {
+                            $.each(fields, function (k,v) {
+                                if (v.name =='__token__' || v.name=='type') {
+                                    return true;
+                                }
+                                $('input[name="'+v.name+'"]').val(res.data[v.name]);
+                            })
+                        }
+                    }
+                })
+            }
+
+			function validateSubmit() {
+				if ($('#name').val() == '') {
+					layerMsg('名称不能为空');return;
+				}
+                ajaxForm('{:url("admin/role/roleaddedit")}', '#commentForm');
+            }            
+            
+        </script>
+    </body>
+</html>
